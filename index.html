@@ -491,8 +491,8 @@
     </main>
 
     <footer>
-      <p class="footer-text">
-        橘川幸夫の言葉 — 6,000の思想から今日の10を<br>
+      <p class="footer-text" id="footer-text">
+        橘川幸夫の言葉 — 今日の3つ<br>
         深呼吸をして、あなたの森を歩いてください
       </p>
     </footer>
@@ -564,6 +564,8 @@
       document.getElementById('cards-header').style.display = 'none';
 
       const data = await fetchWords();
+      allWords = data.allWords || data.words;
+      totalCount = data.total;
       currentWords = data.words;
 
       // 日付更新
@@ -605,6 +607,7 @@
 
       // ヘッダー更新
       document.getElementById('word-count').textContent = `全${total.toLocaleString()}語より`;
+      document.getElementById('footer-text').innerHTML = `橘川幸夫の言葉 — ${total.toLocaleString()}の思想から今日の3を<br>深呼吸をして、あなたの森を歩いてください`;
       document.getElementById('cards-header').style.display = 'flex';
       document.getElementById('actions').style.display = 'flex';
 
@@ -639,8 +642,18 @@
       });
     }
 
+    // 全言葉のキャッシュ
+    let allWords = [];
+    let totalCount = 0;
+
     function refreshWords() {
-      loadWords();
+      if (allWords.length === 0) {
+        loadWords();
+        return;
+      }
+      const shuffled = [...allWords].sort(() => Math.random() - 0.5);
+      currentWords = shuffled.slice(0, 3);
+      renderCards(currentWords, totalCount);
     }
 
     // ================================================
