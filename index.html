@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>深呼吸をする森</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600&family=Zen+Antique&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --forest-deep: #0d1a0f;
+      --forest-mid: #1a2e1c;
+      --forest-light: #2d4a30;
+      --moss: #4a7c59;
+      --sage: #7aab87;
+      --mist: #b8d4be;
+      --dawn: #e8f0e9;
+      --gold: #c9a84c;
+      --gold-light: #e8c97a;
+      --paper: #f5f0e8;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--forest-deep);
+      color: var(--dawn);
+      font-family: 'Shippori Mincho', serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* 背景：森のテクスチャ */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(45, 74, 48, 0.4) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(26, 46, 28, 0.6) 0%, transparent 50%),
+        radial-gradient(ellipse at 60% 80%, rgba(13, 26, 15, 0.8) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* 光の粒子 */
+    .particles {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: var(--gold-light);
+      border-radius: 50%;
+      opacity: 0;
+      animation: float-up var(--duration, 8s) var(--delay, 0s) infinite ease-in-out;
+    }
+
+    @keyframes float-up {
+      0% { opacity: 0; transform: translateY(100vh) translateX(0); }
+      10% { opacity: 0.6; }
+      90% { opacity: 0.2; }
+      100% { opacity: 0; transform: translateY(-10vh) translateX(var(--drift, 20px)); }
+    }
+
+    /* メインコンテナ */
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 24px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ヘッダー */
+    header {
+      padding: 60px 0 40px;
+      text-align: center;
+    }
+
+    .header-kana {
+      font-family: 'Zen Antique', serif;
+      font-size: 11px;
+      letter-spacing: 0.5em;
+      color: var(--sage);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      opacity: 0;
+      animation: fade-in 1s 0.3s forwards;
+    }
+
+    .header-title {
+      font-family: 'Zen Antique', serif;
+      font-size: clamp(28px, 6vw, 42px);
+      font-weight: 400;
+      letter-spacing: 0.2em;
+      color: var(--dawn);
+      line-height: 1.4;
+      opacity: 0;
+      animation: fade-in 1.2s 0.5s forwards;
+      text-shadow: 0 0 40px rgba(184, 212, 190, 0.3);
+    }
+
+    .header-line {
+      width: 60px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 24px auto;
+      opacity: 0;
+      animation: fade-in 1s 0.8s forwards;
+    }
+
+    .header-sub {
+      font-size: 12px;
+      letter-spacing: 0.3em;
+      color: var(--moss);
+      opacity: 0;
+      animation: fade-in 1s 1s forwards;
+    }
+
+    /* 日付バッジ */
+    .date-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(74, 124, 89, 0.15);
+      border: 1px solid rgba(74, 124, 89, 0.3);
+      border-radius: 24px;
+      padding: 6px 16px;
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      color: var(--sage);
+      margin-bottom: 32px;
+      opacity: 0;
+      animation: fade-in 1s 1.2s forwards;
+    }
+
+    .date-badge::before {
+      content: '🌿';
+      font-size: 10px;
+    }
+
+    /* カードグリッド */
+    .cards-section {
+      flex: 1;
+      padding-bottom: 80px;
+    }
+
+    .cards-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      opacity: 0;
+      animation: fade-in 1s 1.4s forwards;
+    }
+
+    .cards-label {
+      font-size: 11px;
+      letter-spacing: 0.4em;
+      color: var(--moss);
+    }
+
+    .word-count {
+      font-size: 11px;
+      color: var(--moss);
+      letter-spacing: 0.1em;
+    }
+
+    .cards-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* 言葉カード */
+    .word-card {
+      position: relative;
+      background: rgba(26, 46, 28, 0.6);
+      border: 1px solid rgba(74, 124, 89, 0.2);
+      border-radius: 4px;
+      padding: 28px 32px;
+      cursor: pointer;
+      transition: all 0.4s ease;
+      opacity: 0;
+      transform: translateY(20px);
+      overflow: hidden;
+    }
+
+    .word-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: linear-gradient(180deg, var(--gold), var(--sage));
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .word-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 50%, rgba(74, 124, 89, 0.08) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .word-card:hover {
+      border-color: rgba(74, 124, 89, 0.5);
+      transform: translateX(4px);
+      background: rgba(26, 46, 28, 0.8);
+    }
+
+    .word-card:hover::before {
+      opacity: 1;
+    }
+
+    .word-card:hover::after {
+      opacity: 1;
+    }
+
+    .word-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .word-card.copied {
+      border-color: rgba(201, 168, 76, 0.6);
+    }
+
+    .card-number {
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      color: var(--moss);
+      margin-bottom: 12px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-text {
+      font-family: 'Shippori Mincho', serif;
+      font-size: clamp(15px, 2.5vw, 18px);
+      line-height: 2;
+      color: var(--dawn);
+      letter-spacing: 0.05em;
+      position: relative;
+      z-index: 1;
+    }
+
+    .copy-hint {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: var(--moss);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 1;
+    }
+
+    .word-card:hover .copy-hint {
+      opacity: 1;
+    }
+
+    .copied-label {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: var(--gold);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 1;
+    }
+
+    .word-card.copied .copied-label {
+      opacity: 1;
+    }
+
+    .word-card.copied .copy-hint {
+      opacity: 0;
+    }
+
+    /* ローディング状態 */
+    .loading-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 0;
+      gap: 24px;
+      opacity: 0;
+      animation: fade-in 0.5s 0.3s forwards;
+    }
+
+    .loading-tree {
+      font-size: 40px;
+      animation: breathe 4s ease-in-out infinite;
+    }
+
+    @keyframes breathe {
+      0%, 100% { transform: scale(1); opacity: 0.6; }
+      50% { transform: scale(1.05); opacity: 1; }
+    }
+
+    .loading-text {
+      font-size: 13px;
+      letter-spacing: 0.4em;
+      color: var(--moss);
+    }
+
+    /* エラー状態 */
+    .error-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 60px 0;
+      gap: 16px;
+      text-align: center;
+    }
+
+    .error-text {
+      font-size: 14px;
+      color: var(--sage);
+      letter-spacing: 0.1em;
+      line-height: 2;
+    }
+
+    /* デモモード用サンプルデータ */
+    .demo-notice {
+      background: rgba(201, 168, 76, 0.1);
+      border: 1px solid rgba(201, 168, 76, 0.3);
+      border-radius: 4px;
+      padding: 12px 20px;
+      margin-bottom: 24px;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      color: var(--gold-light);
+      text-align: center;
+      line-height: 1.8;
+      opacity: 0;
+      animation: fade-in 1s 1.5s forwards;
+    }
+
+    /* アクションボタン */
+    .actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 40px;
+      flex-wrap: wrap;
+      opacity: 0;
+      animation: fade-in 1s 2s forwards;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 2px;
+      font-family: 'Shippori Mincho', serif;
+      font-size: 13px;
+      letter-spacing: 0.3em;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--forest-light), var(--moss));
+      color: var(--dawn);
+      border: 1px solid rgba(122, 171, 135, 0.4);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, var(--moss), var(--sage));
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(74, 124, 89, 0.3);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--sage);
+      border: 1px solid rgba(122, 171, 135, 0.3);
+    }
+
+    .btn-secondary:hover {
+      border-color: rgba(122, 171, 135, 0.6);
+      color: var(--mist);
+    }
+
+    /* フッター */
+    footer {
+      text-align: center;
+      padding: 40px 0;
+      border-top: 1px solid rgba(74, 124, 89, 0.15);
+      margin-top: auto;
+    }
+
+    .footer-text {
+      font-size: 11px;
+      letter-spacing: 0.3em;
+      color: rgba(122, 171, 135, 0.5);
+      line-height: 2;
+    }
+
+    /* アニメーション */
+    @keyframes fade-in {
+      to { opacity: 1; }
+    }
+
+    @keyframes slide-up {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* レスポンシブ */
+    @media (max-width: 600px) {
+      header { padding: 40px 0 30px; }
+      .word-card { padding: 22px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 光の粒子 -->
+  <div class="particles" id="particles"></div>
+
+  <div class="container">
+    <header>
+      <div class="header-kana">橘川幸夫の言葉</div>
+      <h1 class="header-title">深呼吸をする森</h1>
+      <div class="header-line"></div>
+      <p class="header-sub">今日の言葉 — 森の中で、静かに</p>
+    </header>
+
+    <div style="text-align:center;" id="date-area">
+      <div class="date-badge" id="date-badge">読み込み中…</div>
+    </div>
+
+    <main class="cards-section">
+      <div id="demo-notice" class="demo-notice" style="display:none;">
+        ※ デモモード表示中。GAS APIを設定後、本番データに切り替えてください。
+      </div>
+
+      <div class="cards-header" id="cards-header" style="display:none;">
+        <span class="cards-label">TODAY'S WORDS</span>
+        <span class="word-count" id="word-count"></span>
+      </div>
+
+      <div id="content">
+        <!-- ローディング -->
+        <div class="loading-state" id="loading">
+          <div class="loading-tree">🌲</div>
+          <p class="loading-text">言葉を集めています…</p>
+        </div>
+      </div>
+
+      <div class="actions" id="actions" style="display:none;">
+        <button class="btn btn-primary" onclick="refreshWords()">
+          🍃 別の言葉を見る
+        </button>
+        <button class="btn btn-secondary" onclick="copyAll()">
+          📋 全てコピー
+        </button>
+      </div>
+    </main>
+
+    <footer>
+      <p class="footer-text">
+        橘川幸夫の言葉 — 6,000の思想から今日の10を<br>
+        深呼吸をして、あなたの森を歩いてください
+      </p>
+    </footer>
+  </div>
+
+  <script>
+    // ================================================
+    // 設定
+    // ================================================
+    
+    // GAS WebアプリのURLをここに設定（デプロイ後に置き換え）
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbz705lvtEDwpgb9sH1gjLbO9_trSu8XfmcGn5TdWuxpZ7kgKsRF17S6k42YlyKO8CjylQ/exec';
+    
+    // サンプルデータ（GAS未設定時のデモ用）
+    const SAMPLE_WORDS = [
+      '橘川さんの言葉１',
+      '橘川さんの言葉２',
+      '橘川さんの言葉３',
+      '橘川さんの言葉４',
+      '橘川さんの言葉５',
+      '橘川さんの言葉６',
+      '橘川さんの言葉７',
+      '橘川さんの言葉８',
+      '橘川さんの言葉９',
+      '橘川さんの言葉１０',
+    ];
+
+    // ================================================
+    // 言葉の取得
+    // ================================================
+    
+    let currentWords = [];
+
+    async function fetchWords() {
+      if (!GAS_URL) {
+        // デモモード
+        return {
+          words: SAMPLE_WORDS,
+          total: 6000,
+          date: new Date().toLocaleDateString('ja-JP'),
+          isDemo: true
+        };
+      }
+
+      try {
+        const res = await fetch(GAS_URL);
+        const data = await res.json();
+        return { ...data, isDemo: false };
+      } catch (e) {
+        console.error('API取得失敗:', e);
+        return {
+          words: SAMPLE_WORDS,
+          total: 6000,
+          date: new Date().toLocaleDateString('ja-JP'),
+          isDemo: true
+        };
+      }
+    }
+
+    async function loadWords() {
+      document.getElementById('loading').style.display = 'flex';
+      document.getElementById('content').innerHTML = `
+        <div class="loading-state" id="loading">
+          <div class="loading-tree">🌲</div>
+          <p class="loading-text">言葉を集めています…</p>
+        </div>
+      `;
+      document.getElementById('actions').style.display = 'none';
+      document.getElementById('cards-header').style.display = 'none';
+
+      const data = await fetchWords();
+      currentWords = data.words;
+
+      // 日付更新
+      document.getElementById('date-badge').textContent = `🌿 ${data.date}`;
+
+      // デモ表示
+      const demoNotice = document.getElementById('demo-notice');
+      if (data.isDemo) {
+        demoNotice.style.display = 'block';
+      } else {
+        demoNotice.style.display = 'none';
+      }
+
+      // カード表示
+      renderCards(data.words, data.total);
+    }
+
+    function renderCards(words, total) {
+      const content = document.getElementById('content');
+      const grid = document.createElement('div');
+      grid.className = 'cards-grid';
+
+      words.forEach((word, i) => {
+        const card = document.createElement('div');
+        card.className = 'word-card';
+        card.dataset.text = word;
+        card.innerHTML = `
+          <div class="card-number">— ${String(i + 1).padStart(2, '0')}</div>
+          <p class="card-text">${word}</p>
+          <span class="copy-hint">クリックでコピー</span>
+          <span class="copied-label">✓ コピーしました</span>
+        `;
+        card.addEventListener('click', () => copyWord(card, word));
+        grid.appendChild(card);
+      });
+
+      content.innerHTML = '';
+      content.appendChild(grid);
+
+      // ヘッダー更新
+      document.getElementById('word-count').textContent = `全${total.toLocaleString()}語より`;
+      document.getElementById('cards-header').style.display = 'flex';
+      document.getElementById('actions').style.display = 'flex';
+
+      // カードを順番にフェードイン
+      const cards = grid.querySelectorAll('.word-card');
+      cards.forEach((card, i) => {
+        setTimeout(() => {
+          card.style.transition = `opacity 0.5s ease, transform 0.5s ease`;
+          card.classList.add('visible');
+        }, i * 80);
+      });
+    }
+
+    // ================================================
+    // コピー機能
+    // ================================================
+    
+    function copyWord(card, text) {
+      navigator.clipboard.writeText(text).then(() => {
+        card.classList.add('copied');
+        setTimeout(() => card.classList.remove('copied'), 2000);
+      });
+    }
+
+    function copyAll() {
+      const text = currentWords.join('\n\n');
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = event.target;
+        const original = btn.textContent;
+        btn.textContent = '✓ コピーしました';
+        setTimeout(() => btn.textContent = original, 2000);
+      });
+    }
+
+    function refreshWords() {
+      loadWords();
+    }
+
+    // ================================================
+    // 光の粒子生成
+    // ================================================
+    
+    function createParticles() {
+      const container = document.getElementById('particles');
+      for (let i = 0; i < 30; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = `${Math.random() * 100}%`;
+        p.style.setProperty('--duration', `${6 + Math.random() * 10}s`);
+        p.style.setProperty('--delay', `${Math.random() * 8}s`);
+        p.style.setProperty('--drift', `${(Math.random() - 0.5) * 60}px`);
+        p.style.width = `${1 + Math.random() * 2}px`;
+        p.style.height = p.style.width;
+        container.appendChild(p);
+      }
+    }
+
+    // ================================================
+    // 初期化
+    // ================================================
+    
+    createParticles();
+    loadWords();
+  </script>
+</body>
+</html>
