@@ -95,7 +95,7 @@
     ================================================ */
     .date {
       font-family: 'Shippori Mincho', serif;
-      font-size: clamp(12px, 2.5vw, 15px);
+      font-size: clamp(14px, 2vw, 14px);
       letter-spacing: .12em;
       color: #6a9e78;
       margin-bottom: 36px;
@@ -108,7 +108,7 @@
     ================================================ */
     .word {
       font-family: 'Shippori Mincho', serif;
-      font-size: clamp(16px, 3.5vw, 22px);
+      font-size: clamp(18px, 2.8vw, 20px);
       line-height: 2.4;
       letter-spacing: .08em;
       color: #dce8de;
@@ -177,6 +177,30 @@
       0%,100%{ opacity:.4; } 50%{ opacity:1; }
     }
 
+    /* 画像保存ボタン */
+    .dl-btn {
+      position: fixed;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: transparent;
+      border: none;
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 10px;
+      font-weight: 300;
+      letter-spacing: .35em;
+      color: rgba(61,107,74,.45);
+      cursor: pointer;
+      transition: color .3s;
+      white-space: nowrap;
+      padding: 6px 12px;
+      opacity: 0;
+      animation: fadein 1s 1.6s forwards;
+    }
+    .dl-btn:hover { color: rgba(106,158,120,.8); }
+
+    #img-canvas { display:none; }
+
     @keyframes fadein { to { opacity:1; } }
     @keyframes appear {
       from { opacity:0; transform:translateY(6px); }
@@ -206,6 +230,10 @@
   <button class="nav-btn" onclick="prevWord()">← 前</button>
   <button class="nav-btn" onclick="nextWord()">次 →</button>
 </div>
+
+<!-- 画像保存 -->
+<button class="dl-btn" id="dl-btn" style="display:none;" onclick="downloadImage()">画像として保存</button>
+<canvas id="img-canvas"></canvas>
 
 <script>
   const GAS_URL = 'https://script.google.com/macros/s/AKfycbz705lvtEDwpgb9sH1gjLbO9_trSu8XfmcGn5TdWuxpZ7kgKsRF17S6k42YlyKO8CjylQ/exec';
@@ -238,6 +266,7 @@
     const escaped = word.replace(/\n/g, '<br>');
     el.innerHTML = `<span class="appear">${escaped}</span>`;
     document.getElementById('nav').style.display = 'flex';
+    document.getElementById('dl-btn').style.display = 'block';
   }
 
   function prevWord() {
@@ -248,6 +277,75 @@
   function nextWord() {
     currentIndex = (currentIndex + 1) % allWords.length;
     renderWord(currentIndex);
+  }
+
+  // デバイス判定して画像生成
+  function downloadImage() {
+    const isMobile = /iPhone|Android|iPad/i.test(navigator.userAgent) || window.innerWidth < 768;
+    const W = isMobile ? 1080 : 1920;
+    const H = isMobile ? 1920 : 1080;
+
+    const word = allWords[currentIndex];
+    const now  = new Date();
+    const dateStr = `${now.getMonth()+1}月${now.getDate()}日`;
+
+    const canvas = document.getElementById('img-canvas');
+    canvas.width  = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    // 背景
+    const bg = ctx.createRadialGradient(W*.25, H*.4, 0, W*.25, H*.4, W*.9);
+    bg.addColorStop(0, '#1a2e1c');
+    bg.addColorStop(.5, '#111a12');
+    bg.addColorStop(1, '#090f0a');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    // ゴールドライン（上）
+    const lineY1 = H * (isMobile ? 0.14 : 0.16);
+    const lineY2 = H * (isMobile ? 0.86 : 0.84);
+    const grad = ctx.createLinearGradient(0, 0, W, 0);
+    grad.addColorStop(0, 'transparent');
+    grad.addColorStop(.5, '#b8944a');
+    grad.addColorStop(1, 'transparent');
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(W*.12, lineY1); ctx.lineTo(W*.88, lineY1); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(W*.12, lineY2); ctx.lineTo(W*.88, lineY2); ctx.stroke();
+
+    // サイトタイトル
+    ctx.fillStyle = 'rgba(61,107,74,.65)';
+    ctx.font = `300 ${W * (isMobile ? .026 : .018)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('深呼吸をする森', W/2, H * (isMobile ? .105 : .12));
+
+    // 言葉（改行対応）
+    ctx.fillStyle = '#dce8de';
+    const fSize = W * (isMobile ? .032 : .016);
+    ctx.font = `400 ${fSize}px serif`;
+    const lineH = fSize * 2.6;
+    const rawLines = word.split(/\n/);
+    const lines = [];
+    const maxW = W * .60;
+    rawLines.forEach(raw => {
+      if (ctx.measureText(raw).width <= maxW) { lines.push(raw); return; }
+      let cur = '';
+      for (const ch of raw) {
+        if (ctx.measureText(cur+ch).width > maxW) { if(cur) lines.push(cur); cur=ch; }
+        else cur += ch;
+      }
+      if (cur) lines.push(cur);
+    });
+    const totalH = lines.length * lineH;
+    const startY = H/2 - totalH/2 + fSize * .5;
+    lines.forEach((line, i) => ctx.fillText(line, W/2, startY + i * lineH));
+
+    // ダウンロード
+    const link = document.createElement('a');
+    link.download = `shinkokyuu_${now.getMonth()+1}${now.getDate()}_${isMobile?'sp':'pc'}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
   }
 
   async function init() {
